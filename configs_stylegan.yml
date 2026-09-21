@@ -1,0 +1,79 @@
+  Introduction : 'Attacks with StyleGAN2.'
+  optim : 'GAN_based'    #optim method, ['GAN_based', 'GAN_free']
+  cost_fn : 'sim_cmpr0'   #the type of loss function 
+  set_seed : 0         # random seed. Following GIAS, we set 0 as seed for StyleGAN2(FFHQ).
+  indices : 'def'      #decide which part of gradients to be involved in the final gradients match loss.
+  weights : 'equal'    #weight of every graident scalar's matching loss
+  init : 'randn'     #how we initial the original latent code.
+  model : 'ResNet18'   #FL model
+  restarts : 1
+
+  num_images : 4   # the number of images to reconstruct at a batch
+  num_exp : 1     # the number of experiments
+  target_id : 0
+  lr : 0.03
+  total_variation : 0.0001     #the coefficient of total variation
+  bn_stat : 0       #choose if we use bn statistic to regularizer
+  image_norm : 0.000001    #the coefficient of norm regularizer
+  group_lazy : 0    #choose if we use group lazy regularization
+  
+  max_iterations : 1000   #Maximum number of iterations for latent reconstruction.
+
+  #For GIAS
+  gias_iterations : 8000  #Maximum number of gias iterations for reconstruction.
+  gias_lr : 0.001
+  
+  # For input data
+  generative_model : 'stylegan2_io'
+  gen_dataset : 'FFHQ64'
+  dataset : 'FFHQ64'
+  data_path : 'dataset/ffhq_tiny'    # specify your dataset path
+
+  #For output data
+  exp_name : 'diff2obs'   #Same latent space search
+  output_dir : 'results/ffhq/'
+
+  #params for algorithm choice
+  gifd : true
+  gias : true
+  ggl : true
+
+  #For GIFD with stylegan2
+  steps : [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000]      #8000 in total
+  lr_io: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+  start_layer: 0
+  end_layer: 8      #fixed
+
+  # For l-1 projection
+  project : true
+  do_project_gen_out: true
+  do_project_noises: true
+  do_project_latent: true
+  max_radius_gen_out: [1000, 2000, 3000, 4000, 5000, 6000, 8000, 8000]
+  max_radius_noises: [1000, 2000, 3000, 4000, 5000, 6000, 8000, 8000]
+  max_radius_latent: [1000, 2000, 3000, 4000, 5000, 6000, 8000, 8000]
+
+  # The pre-trained StyleGAN checkpoint
+  ckpt: 'stylegan2-ffhq-config-f.pt'
+
+  #LR pace for training
+  lr_same_pace: false 
+
+  # training epoch
+  train_epochs: 100
+  our_num_tries : 20
+
+  #Defense parameter
+  defense_method: 'diff2obs'
+  defense_setting:
+      mode: 'Obs-I'   # <-- add this
+      alpha: 0.4       # optional, for Beta distribution
+      lam: null        # optional, fixed lam for linear mode
+      mask_prob: null  # optional, fixed prob for mask mode
+
+  ddpm_synthetics : "dataset/synthetic/ffhq"
+  #For CMA-ES
+  KLD : 0  
+  cma_budget : 800
+  num_sample : 50  #sample times
+  

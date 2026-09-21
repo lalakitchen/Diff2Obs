@@ -1,0 +1,119 @@
+Introduction: Attacks with BigGAN.
+KLD: 0.1
+bn_stat: 0
+ckpt: None
+cma_budget: 800
+cost_fn: sim_cmpr0
+data_path: dataset/imagenet_
+dataset: IMAGENET_IO
+ddpm_synthetics: dataset/synthetic/imagenet
+defense_method: diff2obs
+defense_setting:
+  alpha: 0.4
+  lam: null
+  mask_prob: null
+  mode: Obs-I
+do_project_gen_out: true
+do_project_latent: false
+do_project_noises: false
+end_layer: 13
+exp_name: diff2obs
+gen_dataset: ImageNet64
+generative_model: BigGAN
+ggl: true
+gias: true
+gias_iterations: 8000
+gias_lr: 1.0e-05
+gifd: true
+group_lazy: 0
+image_norm: 1.0e-06
+indices: def
+init: randn
+lr: 0.03
+lr_io:
+- 0.1
+- 0.1
+- 0.1
+- 0.1
+- 0.1
+- 0.1
+- 0.1
+- 0.1
+- 0.1
+- 0.1
+- 0.1
+- 0.1
+- 0.1
+lr_same_pace: false
+max_iterations: 1000
+max_radius_gen_out:
+- 1000
+- 2000
+- 2500
+- 3000
+- 3500
+- 4000
+- 4500
+- 5000
+- 5500
+- 6000
+- 6500
+- 7000
+- 7500
+max_radius_latent:
+- -1
+- -1
+- -1
+- -1
+- -1
+- -1
+- -1
+- -1
+- -1
+- -1
+- -1
+- -1
+- -1
+max_radius_noises:
+- -1
+- -1
+- -1
+- -1
+- -1
+- -1
+- -1
+- -1
+- -1
+- -1
+- -1
+- -1
+- -1
+model: ResNet18
+num_exp: 1
+num_images: 4
+num_sample: 50
+optim: GAN_based
+our_num_tries: 20
+output_dir: results/imagenet/
+project: true
+restarts: 1
+set_seed: 123
+start_layer: 0
+steps:
+- 1000
+- 1000
+- 1000
+- 1000
+- 1000
+- 1000
+- 1000
+- 1000
+- 1000
+- 1000
+- 1000
+- 1000
+- 1000
+target_id: 0
+total_variation: 0.0001
+train_epochs: 1
+weights: equal

@@ -1,0 +1,8 @@
+# .gitignore
+*.pth # ignore models
+*.csv # ignore tables
+
+**/__pycache__/
+models/*
+dataset/
+*.pt

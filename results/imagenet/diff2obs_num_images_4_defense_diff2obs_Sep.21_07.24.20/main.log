@@ -1,0 +1,19 @@
+--------------------------------------------------------------------------------
+Process ID: 3454981
+output_dir: results/imagenet/diff2obs_num_images_4_defense_diff2obs_Sep.21_07.24.20
+Config for this experiment is saved
+Set seed:123
+Optimizer: SGD (
+Parameter Group 0
+    dampening: 0
+    differentiable: False
+    foreach: None
+    fused: None
+    lr: 0.1
+    maximize: False
+    momentum: 0.9
+    nesterov: False
+    weight_decay: 0.0005
+)
+Epoch 0 started, saved at results/imagenet/diff2obs_num_images_4_defense_diff2obs_Sep.21_07.24.20/epoch_0
+loaded img 0
