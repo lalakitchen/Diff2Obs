@@ -329,11 +329,22 @@ if __name__ == "__main__":
                 elif config['defense_method'] == 'diff2obs':
                     logger.info('Diff2Obs defense applied.')
                     defense_setting = config.get('defense_setting', {})
-                    
-                    # Instantiate Diff2ObsDefense class
+
+                    # Extract defense configurations
+                    strategy = defense_setting.get('mode', 'Obs-I')
                     rho_min = defense_setting.get('alpha', 0.4)
                     total_rounds = config.get('total_rounds', 2000)
-                    diff2obs_module = Diff2ObsDefense(rho_min=rho_min, total_rounds=total_rounds)
+
+                    # Optional overrides from config
+                    fixed_lam = defense_setting.get('lam', None)
+                    fixed_mask_prob = defense_setting.get('mask_prob', None)
+
+                    # Instantiate Diff2ObsDefense class
+                    diff2obs_module = Diff2ObsDefense(
+                        rho_min=rho_min,
+                        total_rounds=total_rounds,
+                        strategy=strategy,
+                    )
 
                     # Compute synthetic gradients for obfuscation
                     with torch.no_grad():

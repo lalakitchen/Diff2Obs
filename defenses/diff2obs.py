@@ -10,24 +10,21 @@ class Diff2ObsDefense:
         total_rounds=2000,
         num_candidates=10,
         strategy='Obs-I',
-        dist_type='beta',
+        dist_type=None,
         concentration=10.0,
     ):
         """Diff2Obs Defense Implementation with Component-Wise Weighting.
 
-        Args:
-            rho_min (float): Minimum decay weight floor.
-            total_rounds (int): Total FL training rounds.
-            num_candidates (int): Number of synthetic candidates generated.
-            strategy (str): Defense mode ('Obs-I', 'Obs-M', or 'Obs-S').
-            dist_type (str): 'beta' for continuous component-wise mixing or 'bernoulli' for binary selection.
-            concentration (float): Concentration parameter S = (alpha + beta) for the Beta distribution.
+        Default Strategy to Distribution Mapping:
+          - Obs-I (Interpolation): Beta distribution
+          - Obs-S (Statistic Match): Beta distribution
+          - Obs-M (Masking): Bernoulli distribution
         """
         self.rho_min = rho_min
         self.total_rounds = total_rounds
         self.num_candidates = num_candidates
         self.strategy = strategy
-        self.dist_type = dist_type.lower()
+        self.dist_type = dist_type.lower() if dist_type else None
         self.concentration = concentration
 
     def get_decay_factor(self, round_r):
@@ -58,28 +55,25 @@ class Diff2ObsDefense:
         return torch.randn(shape, device=device)
 
     def _sample_weights(
-        self, shape, target_mean, dist_type=None, device='cuda', dtype=torch.float32
+        self, shape, target_mean, dist_type, device='cuda', dtype=torch.float32
     ):
-        """Generates component-wise weights (lambda/gamma/mask) matching gradient tensor dimensions."""
-        mode = dist_type if dist_type is not None else self.dist_type
-
-        # Clamp mean to stay strictly within (0, 1) for stable Beta sampling
+        """Generates component-wise weights matching the private gradient shape."""
         p = float(torch.clamp(torch.tensor(target_mean), 1e-5, 1.0 - 1e-5))
 
-        if mode == 'beta':
+        if dist_type == 'beta':
             alpha = p * self.concentration
             beta = (1.0 - p) * self.concentration
             alpha_tensor = torch.full(shape, alpha, device=device, dtype=dtype)
             beta_tensor = torch.full(shape, beta, device=device, dtype=dtype)
             return Beta(alpha_tensor, beta_tensor).sample()
 
-        elif mode == 'bernoulli':
+        elif dist_type == 'bernoulli':
             return torch.bernoulli(
                 torch.full(shape, fill_value=p, device=device, dtype=dtype)
             )
 
         else:
-            raise ValueError(f"Unsupported distribution type '{mode}'. Choose 'beta' or 'bernoulli'.")
+            raise ValueError(f"Unsupported distribution type '{dist_type}'. Choose 'beta' or 'bernoulli'.")
 
     def obfuscate_gradients(
         self,
@@ -93,28 +87,33 @@ class Diff2ObsDefense:
             return grad_private
 
         rho = self.get_decay_factor(round_r)
-        target_mean = 1.0 - rho  # Blending factor intensity
+        target_mean = 1.0 - rho  # Expected intensity (1 - rho)
         mode = strategy if strategy is not None else self.strategy
 
-        # Component-wise weight tensor lambda/gamma/M ~ Dist(mean = 1 - rho)
+        # Determine effective distribution (Obs-I & Obs-S -> Beta, Obs-M -> Bernoulli)
+        effective_dist = dist_type or self.dist_type
+        if effective_dist is None:
+            if mode in ['Obs-M', 'masking']:
+                effective_dist = 'bernoulli'
+            else:  # 'Obs-I', 'Obs-S'
+                effective_dist = 'beta'
+
+        # Component-wise weight sampling matching grad_private.shape
         weights = self._sample_weights(
             shape=grad_private.shape,
             target_mean=target_mean,
-            dist_type=dist_type,
+            dist_type=effective_dist,
             device=grad_private.device,
             dtype=grad_private.dtype,
         )
 
         if mode in ['Obs-I', 'interpolation']:
-            # Component-wise linear combination: (1 - Lambda) * g_l + Lambda * g_s
             return (1.0 - weights) * grad_private + weights * grad_synth
 
         elif mode in ['Obs-M', 'masking']:
-            # Component-wise masking: (1 - M) * g_l + M * g_s
             return (1.0 - weights) * grad_private + weights * grad_synth
 
         elif mode in ['Obs-S', 'statistic_match']:
-            # Component-wise statistic matching linear blend
             eps = 1e-8
             mu_Gl = grad_private.mean()
             sigma_Gl = grad_private.std()
@@ -122,7 +121,6 @@ class Diff2ObsDefense:
             mu_Gs = grad_synth.mean()
             sigma_Gs = grad_synth.std()
 
-            # Normalize private gradient statistics to match synthetic gradient
             grad_hat = mu_Gs + (sigma_Gs / (sigma_Gl + eps)) * (grad_private - mu_Gl)
             return (1.0 - weights) * grad_private + weights * grad_hat
 
